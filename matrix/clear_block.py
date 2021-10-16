@@ -1,3 +1,7 @@
+'''
+tetris engine
+ n*n square, remove number 1 block
+'''
 def clear(matrix):
 
     matrix_length = len(matrix)
