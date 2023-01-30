@@ -9,24 +9,27 @@ public class Solver {
 
     private int moveCount;
     private ArrayList<Board> goals;
+    private ArrayList<String> visited;
 
-    private class AstarObject implements Comparable<Board> {
+    private class AstarObject implements Comparable<AstarObject> {
         Board board;
         public AstarObject(Board board) {
             this.board = board;
         }
 
         @Override
-        public int compareTo(Board o) {
-            return Integer.compare(board.hamming(), o.hamming());
+        public int compareTo(AstarObject that) {
+            return Integer.compare(board.manhattan(), that.board.manhattan());
         }
     }
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial) {
         goals = new ArrayList<>();
+        visited = new ArrayList<>();
         MinPQ<AstarObject> simulations = new MinPQ<>();
         Iterator<Board> boardIterator = initial.neighbors().iterator();
+        visited.add(initial.toString());
         /*
         int[][] solution = new int[initial.board.length][initial.board.length];
         for (int i = 0; i < solution.length; i++) {
@@ -42,43 +45,54 @@ public class Solver {
 
         while (boardIterator.hasNext()) {
             Board neighbor = boardIterator.next();
+            if (visited.contains(neighbor.toString())) continue;
             AstarObject astarObject = new AstarObject(neighbor);
             simulations.insert(astarObject);
+            visited.add(neighbor.toString());
         }
 
         int min = simulations.min().board.manhattan();
+
         while (simulations.size() > 0) {
+            moveCount++;
             MinPQ<AstarObject> newSimulations = new MinPQ<>();
-            AstarObject simulator = simulations.delMin();
 
-            if (simulator.board.isGoal()) {
-                goals.add(simulator.board);
-                continue;
-            }
-            if (min == simulator.board.manhattan()) {
-                boardIterator = simulator.board.neighbors().iterator();
+            while (simulations.size() > 0) {
+                AstarObject simulator = simulations.delMin();
 
-                while (boardIterator.hasNext()) {
-                    Board neighbor = boardIterator.next();
-                    AstarObject astarObject = new AstarObject(neighbor);
-                    newSimulations.insert(astarObject);
+                if (simulator.board.isGoal()) {
+                    goals.add(simulator.board);
+                    continue;
                 }
-            } else {
-                simulations = newSimulations;
-                if (!newSimulations.isEmpty()) {
-                    min = newSimulations.min().board.manhattan();
+                if (min == simulator.board.manhattan()) {
+                    boardIterator = simulator.board.neighbors().iterator();
+
+                    while (boardIterator.hasNext()) {
+                        Board neighbor = boardIterator.next();
+                        if (visited.contains(neighbor.toString())) continue;
+                        AstarObject astarObject = new AstarObject(neighbor);
+                        newSimulations.insert(astarObject);
+                        visited.add(neighbor.toString());
+                    }
                 } else {
-                    min = -1;
+                    break;
                 }
             }
+
+            simulations = newSimulations;
+            if (!simulations.isEmpty()) {
+                min = simulations.min().board.manhattan();
+            } else {
+                min = -1;
+            }
+
         }
 
-        moveCount = min;
     }
 
     // is the initial board solvable? (see below)
     public boolean isSolvable() {
-        return moveCount > -1;
+        return goals.size() > 0;
     }
 
     // min number of moves to solve initial board; -1 if unsolvable
