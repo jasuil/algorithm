@@ -7,6 +7,9 @@ public class Board {
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
     public Board(int[][] tiles) {
+        if (tiles == null) throw new IllegalArgumentException();
+
+        this.board = new int[tiles.length][tiles.length];
         for (int i = 0; i < tiles.length; i++) {
             for (int i2 = 0; i2 < tiles.length; i2++) {
                 this.board[i][i2] = tiles[i][i2];
@@ -24,7 +27,7 @@ public class Board {
         for (int i = 0; i < board.length; i++) {
             for (int i2 = 0; i2 < board.length; i2++) {
                 sb.append(board[i][i2]);
-                if (i < board.length - 1) sb.append(" ");
+                if (i2 < board.length - 1) sb.append(" ");
             }
             if (i < board.length - 1) sb.append("\n");
         }
@@ -41,7 +44,8 @@ public class Board {
         int hamming = 0;
         for (int i = 0; i < board.length; i++) {
             for (int i2 = 0; i2 < board.length; i2++) {
-                if (board[i][i2] != i * board.length + i2 + 1) {
+                if (i == board.length-1 && i2 == board.length-1) continue;
+                else if (board[i][i2] != i * board.length + i2 + 1) {
                     hamming += 1;
                 }
             }
@@ -52,10 +56,15 @@ public class Board {
     // sum of Manhattan distances between tiles and goal
     public int manhattan() {
         int manhattan = 0;
-        for (int i =0; i < board.length; i++) {
+        for (int i = 0; i < board.length; i++) {
             for (int i2 = 0; i2 < board.length; i2++) {
-                if (board[i][i2] != i * board.length + i2 + 1) {
-                    manhattan += board[i][i2] - (i * board.length + i2 + 1);
+                if (i == board.length-1 && i2 == board.length-1) {
+                    if (board[i][i2] == 0) continue;
+                    manhattan += board[i][i2] - (i * board.length + i2 + 1) > 0 ? board[i][i2] - (i * board.length + i2 + 1) : (i * board.length + i2 + 1) - board[i][i2];
+                } else if (board[i][i2] != i * board.length + i2 + 1) {
+                    int exchangeNumber = board[i][i2];
+                    if (board[i][i2] == 0) continue;
+                    manhattan += exchangeNumber - (i * board.length + i2 + 1) > 0 ? exchangeNumber - (i * board.length + i2 + 1) : (i * board.length + i2 + 1) - exchangeNumber;
                 }
             }
         }
@@ -69,12 +78,7 @@ public class Board {
 
     // does this board equal y?
     public boolean equals(Object y) {
-        int[][] cp = (int[][]) y;
-        for (int i = 0; i < cp.length; i++) {
-            for (int i2 = 0; i2 < cp.length; i2++) {
-                if (board[i][i2] != cp[i][i2]) return false;
-            }
-        }
+        if (y == null || !(y.getClass().getClass().equals(board.getClass()))) throw new IllegalArgumentException();
         return true;
     }
 
@@ -86,24 +90,26 @@ public class Board {
             for (int i = 0; i < board.length; i++) {
                 for (int i2 = 0; i2 < board.length; i2++) {
                     if (i == zeroIndex[0]){
-                        if (i2 == zeroIndex[1] - 1) cpBoard[i][i2] = board[i][i2];
-                        else cpBoard[i][i2] = 0;
+                        if (i2 == zeroIndex[1] - 1) cpBoard[i][i2] = 0;
+                        else if (i2 == zeroIndex[1]) cpBoard[i][i2] = board[i][i2-1];
+                        else cpBoard[i][i2] = board[i][i2];
                     }
-                    else cpBoard[i] = board[i];
+                    else cpBoard[i][i2] = board[i][i2];
                 }
             }
             Board newBoard = new Board(cpBoard);
             iterable.add(newBoard);
         }
-        if (zeroIndex[1] > board.length - 1) {
+        if (zeroIndex[1] < board.length - 1) {
             int[][] cpBoard = new int[board.length][board.length];
             for (int i = 0; i < board.length; i++) {
                 for (int i2 = 0; i2 < board.length; i2++) {
                     if (i == zeroIndex[0]){
-                        if (i2 == zeroIndex[1] + 1) cpBoard[i][i2] = board[i][i2];
-                        else cpBoard[i][i2] = 0;
+                        if (i2 == zeroIndex[1] + 1) cpBoard[i][i2] = 0;
+                        else if (i2 == zeroIndex[1]) cpBoard[i][i2] = board[i][i2+1];
+                        else cpBoard[i][i2] = board[i][i2];
                     }
-                    else cpBoard[i] = board[i];
+                    else cpBoard[i][i2] = board[i][i2];
                 }
             }
             Board newBoard = new Board(cpBoard);
@@ -114,24 +120,26 @@ public class Board {
             for (int i = 0; i < board.length; i++) {
                 for (int i2 = 0; i2 < board.length; i2++) {
                     if (i2 == zeroIndex[1]){
-                        if (i == zeroIndex[0] - 1) cpBoard[i][i2] = board[i][i2];
-                        else cpBoard[i][i2] = 0;
+                        if (i == zeroIndex[0] - 1) cpBoard[i][i2] = 0;
+                        else if (i == zeroIndex[0]) cpBoard[i][i2] = board[i-1][i2];
+                        else cpBoard[i][i2] = board[i][i2];
                     }
-                    else cpBoard[i] = board[i];
+                    else cpBoard[i][i2] = board[i][i2];
                 }
             }
             Board newBoard = new Board(cpBoard);
             iterable.add(newBoard);
         }
-        if (zeroIndex[0] > board.length - 1) {
+        if (zeroIndex[0] < board.length - 1) {
             int[][] cpBoard = new int[board.length][board.length];
             for (int i = 0; i < board.length; i++) {
                 for (int i2 = 0; i2 < board.length; i2++) {
                     if (i2 == zeroIndex[1]){
-                        if (i == zeroIndex[0] + 1) cpBoard[i][i2] = board[i][i2];
-                        else cpBoard[i][i2] = 0;
+                        if (i == zeroIndex[0] + 1) cpBoard[i][i2] = 0;
+                        else if (i == zeroIndex[0]) cpBoard[i][i2] = board[i+1][i2];
+                        else cpBoard[i][i2] = board[i][i2];
                     }
-                    else cpBoard[i] = board[i];
+                    else cpBoard[i][i2] = board[i][i2];
                 }
             }
             Board newBoard = new Board(cpBoard);
@@ -148,7 +156,9 @@ public class Board {
 
     // unit testing (not graded)
     public static void main(String[] args) {
-
+        Board b = new Board(new int[][]{{1,2},{0,3}});
+        int g= b.manhattan();
+        assert g==0;
     }
 
 }
