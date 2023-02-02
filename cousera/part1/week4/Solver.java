@@ -1,14 +1,14 @@
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
+import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdOut;
 
 public class Solver {
 
     private int moveCount;
-    private LinkedList<Board> goals;
+    private Stack<Board> goals;
 
     private static class AstarObject implements Comparable<AstarObject> {
         Board board;
@@ -27,12 +27,14 @@ public class Solver {
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial) {
-        goals = new LinkedList<>();
+        if (initial == null) throw new IllegalArgumentException();
+
+        goals = new Stack<>();
         MinPQ<AstarObject> simulations = new MinPQ<>();
         Iterator<Board> boardIterator = initial.neighbors().iterator();
 
         if (initial.isGoal()) {
-            goals.add(initial);
+            goals.push(initial);
             return;
         }
 
@@ -46,30 +48,36 @@ public class Solver {
         }
 
         moveCount = 0;
-        int loopCount = 0;
         while (simulations.size() > 0) {
-            loopCount++;
             AstarObject simulator = simulations.delMin();
 
             if (simulator.board.isGoal()) {
-                goals = new LinkedList<>();
                 moveCount = simulator.count;
                 while (simulator != null) {
-                    goals.addFirst(simulator.board);
+                    goals.push(simulator.board);
                     simulator = simulator.parent;
                 }
                 break;
             }
 
-            boardIterator = simulator.board.neighbors().iterator();
-
-            while (boardIterator.hasNext()) {
-                Board neighbor = boardIterator.next();
-                AstarObject astarObject = new AstarObject(neighbor);
-                astarObject.count = simulator.count + 1;
-                astarObject.parent = simulator;
-                simulations.insert(astarObject);
+            for (Board neighbor : simulator.board.neighbors()) {
+                boolean isSafe = true;
+                AstarObject temp = simulator;
+                while (temp != null) {
+                    if (neighbor.equals(temp.board)) {
+                        isSafe = false;
+                        break;
+                    }
+                    temp = temp.parent;
+                }
+                if (isSafe) {
+                    AstarObject astarObject = new AstarObject(neighbor);
+                    astarObject.count = simulator.count + 1;
+                    astarObject.parent = simulator;
+                    simulations.insert(astarObject);
+                }
             }
+
         }
 
         if (goals.size() == 0) moveCount = -1;
@@ -104,8 +112,6 @@ public class Solver {
         Board initial = new Board(tiles);
         // solve the puzzle
         Solver solver = new Solver(initial);
-
-        initial.equals(solver.solution().iterator().next());
 
         // print solution to standard output
         if (!solver.isSolvable())
