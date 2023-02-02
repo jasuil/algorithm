@@ -1,5 +1,6 @@
-import java.util.ArrayList;
+import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
@@ -8,85 +9,70 @@ import edu.princeton.cs.algs4.StdOut;
 public class Solver {
 
     private int moveCount;
-    private ArrayList<Board> goals;
-    private ArrayList<String> visited;
+    private LinkedList<Board> goals;
 
-    private class AstarObject implements Comparable<AstarObject> {
+    private static class AstarObject implements Comparable<AstarObject> {
         Board board;
+        AstarObject parent;
+        int count;
         public AstarObject(Board board) {
             this.board = board;
+            count = 0;
         }
 
         @Override
         public int compareTo(AstarObject that) {
-            return Integer.compare(board.manhattan(), that.board.manhattan());
+            return Integer.compare(board.manhattan()+count, that.board.manhattan()+that.count);
         }
     }
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial) {
-        goals = new ArrayList<>();
-        visited = new ArrayList<>();
+        goals = new LinkedList<>();
         MinPQ<AstarObject> simulations = new MinPQ<>();
         Iterator<Board> boardIterator = initial.neighbors().iterator();
-        visited.add(initial.toString());
-        /*
-        int[][] solution = new int[initial.board.length][initial.board.length];
-        for (int i = 0; i < solution.length; i++) {
-            for (int i2 = 0; i2 < solution.length; i2++) {
-                if (i == solution.length-1 && i2 == solution.length-1) {
-                    solution[i][i2] = 0;
-                } else {
-                    solution[i][i2] = i * solution.length + i2 + 1;
-                }
-            }
-        }
-        Board solutionBoard = new Board(solution);*/
 
+        if (initial.isGoal()) {
+            goals.add(initial);
+            return;
+        }
+        
+        AstarObject parent = new AstarObject(initial);
         while (boardIterator.hasNext()) {
             Board neighbor = boardIterator.next();
-            if (visited.contains(neighbor.toString())) continue;
             AstarObject astarObject = new AstarObject(neighbor);
+            astarObject.count = 1;
+            astarObject.parent = parent;
             simulations.insert(astarObject);
-            visited.add(neighbor.toString());
         }
 
-        int min = simulations.min().board.manhattan();
-
+        moveCount = 0;
+        int loopCount = 0;
         while (simulations.size() > 0) {
-            moveCount++;
-            MinPQ<AstarObject> newSimulations = new MinPQ<>();
+            AstarObject simulator = simulations.delMin();
 
-            while (simulations.size() > 0) {
-                AstarObject simulator = simulations.delMin();
-
-                if (simulator.board.isGoal()) {
-                    goals.add(simulator.board);
-                    continue;
+            if (simulator.board.isGoal()) {
+                goals = new LinkedList<>();
+                moveCount = simulator.count;
+                while (simulator != null) {
+                    goals.addFirst(simulator.board);
+                    simulator = simulator.parent;
                 }
-                if (min == simulator.board.manhattan()) {
-                    boardIterator = simulator.board.neighbors().iterator();
-
-                    while (boardIterator.hasNext()) {
-                        Board neighbor = boardIterator.next();
-                        if (visited.contains(neighbor.toString())) continue;
-                        AstarObject astarObject = new AstarObject(neighbor);
-                        newSimulations.insert(astarObject);
-                        visited.add(neighbor.toString());
-                    }
-                } else {
-                    break;
-                }
+                break;
             }
 
-            simulations = newSimulations;
-            if (!simulations.isEmpty()) {
-                min = simulations.min().board.manhattan();
-            } else {
-                min = -1;
-            }
+            boardIterator = simulator.board.neighbors().iterator();
 
+            while (boardIterator.hasNext()) {
+                Board neighbor = boardIterator.next();
+                AstarObject astarObject = new AstarObject(neighbor);
+                astarObject.count = simulator.count + 1;
+                astarObject.parent = simulator;
+                simulations.insert(astarObject);
+            }
         }
+
+        if (goals.size() == 0) moveCount = -1;
 
     }
 
@@ -97,12 +83,12 @@ public class Solver {
 
     // min number of moves to solve initial board; -1 if unsolvable
     public int moves() {
-        return moveCount;
+        return goals.size() == 0 ? -1 : moveCount;
     }
 
     // sequence of boards in a shortest solution; null if unsolvable
     public Iterable<Board> solution() {
-        return goals;
+        return goals.size() == 0 ? null : goals;
     }
 
     // test client (see below)
@@ -116,7 +102,6 @@ public class Solver {
             for (int j = 0; j < n; j++)
                 tiles[i][j] = in.readInt();
         Board initial = new Board(tiles);
-
         // solve the puzzle
         Solver solver = new Solver(initial);
 
