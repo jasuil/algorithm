@@ -4,23 +4,17 @@ import java.util.Arrays;
 public class Board {
 
     private int[][] board;
-    private int[] zeroIndex;
     private int manhattan;
     private int hamming;
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
     public Board(int[][] tiles) {
-        zeroIndex = new int[]{0, 0};
         if (tiles == null) throw new IllegalArgumentException();
 
         this.board = new int[tiles.length][tiles.length];
         for (int i = 0; i < tiles.length; i++) {
             for (int i2 = 0; i2 < tiles.length; i2++) {
                 this.board[i][i2] = tiles[i][i2];
-                if (tiles[i][i2] == 0) {
-                    zeroIndex[0] = i;
-                    zeroIndex[1] = i2;
-                }
 
                 if (i == board.length-1 && i2 == board.length-1) {
                     if (board[i][i2] == 0) continue;
@@ -132,6 +126,16 @@ public class Board {
     // all neighboring boards
     public Iterable<Board> neighbors() {
         ArrayList<Board> iterable = new ArrayList<>();
+        int[] zeroIndex = new int[0];
+        for(int i = 0; i < board.length; i++) {
+            for (int i2 = 0; i2 < board.length; i2++) {
+                if (board[i][i2] == 0) {
+                    zeroIndex = new int[] {i, i2 };
+                    break;
+                }
+            }
+        }
+
         if (zeroIndex[1] > 0) {
             Board newBoard = new Board(board);
             int temp = newBoard.board[zeroIndex[0]][zeroIndex[1]];
@@ -146,7 +150,6 @@ public class Board {
             int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToColumn - diffToColumn;
-            newBoard.zeroIndex = new int[]{zeroIndex[0],zeroIndex[1]-1};
             iterable.add(newBoard);
         }
         if (zeroIndex[1] < board.length - 1) {
@@ -162,7 +165,6 @@ public class Board {
             int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ?(newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToColumn - diffToColumn;
-            newBoard.zeroIndex = new int[]{zeroIndex[0],zeroIndex[1]+1};
             iterable.add(newBoard);
         }
         if (zeroIndex[0] > 0) {
@@ -178,7 +180,6 @@ public class Board {
            // int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ?(newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToRow - diffToRow;
-            newBoard.zeroIndex = new int[]{zeroIndex[0]-1,zeroIndex[1]};
             iterable.add(newBoard);
         }
         if (zeroIndex[0] < board.length - 1) {
@@ -194,7 +195,6 @@ public class Board {
            // int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ?(newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToRow - diffToRow;
-            newBoard.zeroIndex = new int[]{zeroIndex[0]+1,zeroIndex[1]};
             iterable.add(newBoard);
         }
 
