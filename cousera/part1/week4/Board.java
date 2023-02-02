@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Board {
 
@@ -32,14 +31,12 @@ public class Board {
             }
         }
 
-       // calcHamming();
-       // calcManhattan();
     }
 
     // string representation of this board
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.valueOf(board.length)).append("\n");
+        sb.append(board.length).append("\n");
         for (int i = 0; i < board.length; i++) {
             for (int i2 = 0; i2 < board.length; i2++) {
                 if (i2 == 0) {
@@ -62,8 +59,8 @@ public class Board {
     }
 
     // number of tiles out of place
-    private void calcHamming() {
-
+    public int hamming() {
+        hamming = 0;
         for (int i = 0; i < board.length; i++) {
             for (int i2 = 0; i2 < board.length; i2++) {
                 if (i == board.length-1 && i2 == board.length-1) {
@@ -76,33 +73,10 @@ public class Board {
                 }
             }
         }
-    }
-    public int hamming() {
-        hamming = 0;
-        calcHamming();
         return hamming;
     }
 
     // sum of Manhattan distances between tiles and goal
-    private void calcManhattan() {
-        for (int i = 0; i < board.length; i++) {
-            for (int i2 = 0; i2 < board.length; i2++) {
-                if (i == board.length-1 && i2 == board.length-1) {
-                    if (board[i][i2] == 0) continue;
-                    int diffToRow = i - (board[i][i2]-1) / board.length < 0 ? (board[i][i2]-1) / board.length - i : i - (board[i][i2]-1) / board.length;
-                    int diffToColumn = i2 - (board[i][i2]-1) % board.length < 0 ?(board[i][i2]-1) % board.length  - i2 : i2 - (board[i][i2]-1) % board.length;
-                    manhattan += diffToRow + diffToColumn;
-                    hamming += 1;
-                } else if (board[i][i2] != i * board.length + i2 + 1) {
-                    if (board[i][i2] == 0) continue;
-                    int diffToRow = i - (board[i][i2]-1) / board.length < 0 ? (board[i][i2]-1) / board.length - i : i - (board[i][i2]-1) / board.length;
-                    int diffToColumn = i2 - (board[i][i2]-1) % board.length < 0 ?(board[i][i2]-1) % board.length  - i2 : i2 - (board[i][i2]-1) % board.length;
-                    manhattan += diffToRow + diffToColumn;
-                    hamming += 1;
-                }
-            }
-        }
-    }
     public int manhattan() {
         return manhattan;
     }
@@ -118,9 +92,14 @@ public class Board {
         if (y == null) return false;
         if (y.getClass() != this.getClass()) return false;
         Board that = (Board) y;
-        return Arrays.deepEquals(this.board, that.board);
-        //if (!that.board.getClass().equals(int[][].class)) return false;
-
+        if (board.length != that.board.length) return false;
+        if (board[0].length != that.board[0].length) return false;
+        for(int i = 0; i < board.length; i++) {
+            for (int i2 = 0; i2 < board.length; i2++) {
+                if (board[i][i2] != that.board[i][i2]) return false;
+            }
+        }
+        return true;
     }
 
     // all neighboring boards
@@ -140,13 +119,11 @@ public class Board {
             Board newBoard = new Board(board);
             int temp = newBoard.board[zeroIndex[0]][zeroIndex[1]];
             // 이동할 곳
-           // int diffToRow = zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]-1]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]-1]-1) / newBoard.board.length - zeroIndex[0] : zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]-1]-1) / newBoard.board.length;
             int diffToColumn = zeroIndex[1]-1 - (newBoard.board[zeroIndex[0]][zeroIndex[1]-1]-1) % newBoard.board.length < 0 ?(newBoard.board[zeroIndex[0]][zeroIndex[1]-1]-1) % newBoard.board.length  - (zeroIndex[1]-1) : zeroIndex[1]-1 - (newBoard.board[zeroIndex[0]][zeroIndex[1]-1]-1) % newBoard.board.length;
 
             newBoard.board[zeroIndex[0]][zeroIndex[1]] = newBoard.board[zeroIndex[0]][zeroIndex[1]-1];
             newBoard.board[zeroIndex[0]][zeroIndex[1]-1] = temp;
             // 0이었던 곳
-          //  int afterDiffToRow = zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length - zeroIndex[0] : zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length;
             int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToColumn - diffToColumn;
@@ -155,13 +132,11 @@ public class Board {
         if (zeroIndex[1] < board.length - 1) {
             Board newBoard = new Board(board);
             int temp = newBoard.board[zeroIndex[0]][zeroIndex[1]];
-           // int diffToRow = zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]+1]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]+1]-1) / newBoard.board.length - zeroIndex[0] : zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]+1]-1) / newBoard.board.length;
             int diffToColumn = zeroIndex[1]+1 - (newBoard.board[zeroIndex[0]][zeroIndex[1]+1]-1) % newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]+1]-1) % newBoard.board.length  - (zeroIndex[1]+1) : zeroIndex[1]+1 - (newBoard.board[zeroIndex[0]][zeroIndex[1]+1]-1) % newBoard.board.length;
 
             newBoard.board[zeroIndex[0]][zeroIndex[1]] = newBoard.board[zeroIndex[0]][zeroIndex[1]+1];
             newBoard.board[zeroIndex[0]][zeroIndex[1]+1] = temp;
-
-           // int afterDiffToRow = zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length - zeroIndex[0] : zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length;
+            
             int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ?(newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToColumn - diffToColumn;
@@ -171,13 +146,11 @@ public class Board {
             Board newBoard = new Board(board);
             int temp = newBoard.board[zeroIndex[0]][zeroIndex[1]];
             int diffToRow = zeroIndex[0]-1 - (newBoard.board[zeroIndex[0]-1][zeroIndex[1]]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]-1][zeroIndex[1]]-1) / newBoard.board.length - (zeroIndex[0]-1) : zeroIndex[0]-1 - (newBoard.board[zeroIndex[0]-1][zeroIndex[1]]-1) / newBoard.board.length;
-           // int diffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]-1][zeroIndex[1]]-1) % newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]-1][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]-1][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.board[zeroIndex[0]][zeroIndex[1]] = newBoard.board[zeroIndex[0]-1][zeroIndex[1]];
             newBoard.board[zeroIndex[0]-1][zeroIndex[1]] = temp;
 
             int afterDiffToRow = zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length - zeroIndex[0] : zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length;
-           // int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ?(newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToRow - diffToRow;
             iterable.add(newBoard);
@@ -186,13 +159,11 @@ public class Board {
             Board newBoard = new Board(board);
             int temp = newBoard.board[zeroIndex[0]][zeroIndex[1]];
             int diffToRow = zeroIndex[0]+1 - (newBoard.board[zeroIndex[0]+1][zeroIndex[1]]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]+1][zeroIndex[1]]-1) / newBoard.board.length - (zeroIndex[0]+1) : zeroIndex[0]+1 - (newBoard.board[zeroIndex[0]+1][zeroIndex[1]]-1) / newBoard.board.length;
-           // int diffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]+1][zeroIndex[1]]-1) % newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]+1][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]+1][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.board[zeroIndex[0]][zeroIndex[1]] = newBoard.board[zeroIndex[0]+1][zeroIndex[1]];
             newBoard.board[zeroIndex[0]+1][zeroIndex[1]] = temp;
 
             int afterDiffToRow = zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length < 0 ? (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length - zeroIndex[0] : zeroIndex[0] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) / newBoard.board.length;
-           // int afterDiffToColumn = zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length < 0 ?(newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length  - zeroIndex[1] : zeroIndex[1] - (newBoard.board[zeroIndex[0]][zeroIndex[1]]-1) % newBoard.board.length;
 
             newBoard.manhattan += afterDiffToRow - diffToRow;
             iterable.add(newBoard);
@@ -220,17 +191,29 @@ public class Board {
                 }
             }
         }
+        int diffToRow1 = notZero[0][0] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) / cpBoard.board.length < 0 ? (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) / cpBoard.board.length - notZero[0][0] : notZero[0][0] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) / cpBoard.board.length;
+        int diffToColumn1 = notZero[0][1] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) % cpBoard.board.length < 0 ?(cpBoard.board[notZero[0][0]][notZero[0][1]]-1) % cpBoard.board.length  - notZero[0][1] : notZero[0][1] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) % cpBoard.board.length;
+        int diffToRow2 = notZero[1][0] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) / cpBoard.board.length < 0 ? (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) / cpBoard.board.length - notZero[1][0] : notZero[1][0] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) / cpBoard.board.length;
+        int diffToColumn2 = notZero[1][1] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) % cpBoard.board.length < 0 ?(cpBoard.board[notZero[1][0]][notZero[1][1]]-1) % cpBoard.board.length  - notZero[1][1] : notZero[1][1] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) % cpBoard.board.length;
+        cpBoard.manhattan -= diffToRow1 + diffToRow2 + diffToColumn1 + diffToColumn2;
+
         int temp = cpBoard.board[notZero[0][0]][notZero[0][1]];
         cpBoard.board[notZero[0][0]][notZero[0][1]] = cpBoard.board[notZero[1][0]][notZero[1][1]];
         cpBoard.board[notZero[1][0]][notZero[1][1]] = temp;
+
+        diffToRow1 = notZero[0][0] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) / cpBoard.board.length < 0 ? (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) / cpBoard.board.length - notZero[0][0] : notZero[0][0] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) / cpBoard.board.length;
+        diffToColumn1 = notZero[0][1] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) % cpBoard.board.length < 0 ?(cpBoard.board[notZero[0][0]][notZero[0][1]]-1) % cpBoard.board.length  - notZero[0][1] : notZero[0][1] - (cpBoard.board[notZero[0][0]][notZero[0][1]]-1) % cpBoard.board.length;
+        diffToRow2 = notZero[1][0] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) / cpBoard.board.length < 0 ? (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) / cpBoard.board.length - notZero[1][0] : notZero[1][0] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) / cpBoard.board.length;
+        diffToColumn2 = notZero[1][1] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) % cpBoard.board.length < 0 ?(cpBoard.board[notZero[1][0]][notZero[1][1]]-1) % cpBoard.board.length  - notZero[1][1] : notZero[1][1] - (cpBoard.board[notZero[1][0]][notZero[1][1]]-1) % cpBoard.board.length;
+        cpBoard.manhattan += diffToRow1 + diffToRow2 + diffToColumn1 + diffToColumn2;
 
         return cpBoard;
     }
 
     // unit testing (not graded)
     public static void main(String[] args) {
-        Board b = new Board(new int[][]{ { 1, 0, 3}, { 4, 2, 5}, { 7, 8, 6}});
-        Iterable<Board> b1 = b.neighbors();
+        Board b = new Board(new int[][]{ { 3,7,8}, { 1,4,6}, { 5,0,2}});
+        int t = b.twin().manhattan();
 
         b.equals(new Board(new int[][]{ { 21, 32}, { 0, 3}}));
     }
