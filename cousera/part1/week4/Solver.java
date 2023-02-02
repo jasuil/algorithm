@@ -1,4 +1,3 @@
-import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -36,7 +35,7 @@ public class Solver {
             goals.add(initial);
             return;
         }
-        
+
         AstarObject parent = new AstarObject(initial);
         while (boardIterator.hasNext()) {
             Board neighbor = boardIterator.next();
@@ -49,6 +48,7 @@ public class Solver {
         moveCount = 0;
         int loopCount = 0;
         while (simulations.size() > 0) {
+            loopCount++;
             AstarObject simulator = simulations.delMin();
 
             if (simulator.board.isGoal()) {
@@ -104,6 +104,8 @@ public class Solver {
         Board initial = new Board(tiles);
         // solve the puzzle
         Solver solver = new Solver(initial);
+
+        initial.equals(solver.solution().iterator().next());
 
         // print solution to standard output
         if (!solver.isSolvable())
