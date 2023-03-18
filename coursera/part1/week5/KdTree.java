@@ -3,7 +3,6 @@ import edu.princeton.cs.algs4.RectHV;
 import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdDraw;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class KdTree {
@@ -14,11 +13,27 @@ public class KdTree {
     }
 
     public static void main(String[] args) {
+        KdTree kdTree = new KdTree();
+
+        Point2D point2D = new Point2D(0.7, 0.2);
+        kdTree.insert(point2D);
+        point2D = new Point2D(0.5, 0.4);
+        kdTree.insert(point2D);
+        point2D = new Point2D(0.2, 0.3);
+        kdTree.insert(point2D);
+        point2D = new Point2D(0.4, 0.7);
+        kdTree.insert(point2D);
+        point2D = new Point2D(0.9, 0.6);
+        kdTree.insert(point2D);
+
+        point2D = new Point2D(0.322, 0.015);
+        point2D = kdTree.nearest(point2D);
+        System.out.println(point2D);
 
     }                 // unit testing of the methods (optional)
 
     public boolean isEmpty() {
-        return points.size() > 0 ? false : true;
+        return points.size() <= 0;
     }                      // is the set empty?
 
     public int size() {
@@ -35,9 +50,7 @@ public class KdTree {
     }          // does the set contain point p?
 
     public void draw() {
-        Iterator<Point2D> iterator = points.keys().iterator();
-        while (iterator.hasNext()) {
-            Point2D point = iterator.next();
+        for (Point2D point : points.keys()) {
             StdDraw.point(point.x(), point.y());
         }
     }                        // draw all points to standard draw
@@ -45,19 +58,20 @@ public class KdTree {
     public Iterable<Point2D> range(RectHV rect) {
         if (rect == null) throw new IllegalArgumentException();
         BST2d residents = new BST2d();
-        Iterator<Point2D> iterator = points.keys(new Point2D(rect.xmin(), rect.ymin()), new Point2D(rect.xmax(), rect.ymax())).iterator();
-        while (iterator.hasNext()) {
-            Point2D point = iterator.next();
+        for (Point2D point : points.rangeKeys(rect)) {
             if (rect.contains(point)) residents.put(point);
         }
         return residents.root == null ? new Stack<>() : residents.keys();
     }            // all points that are inside the rectangle (or on the boundary)
 
     public Point2D nearest(Point2D p) {
-        if (p == null) throw new IllegalArgumentException();
-        if (points.size() == 0) return null;
-        BST2d.Node bottom = points.nearest(p);
-        if (bottom == null) return null;
+       if (p == null) throw new IllegalArgumentException();
+       if (points.size() == 0) return null;
+       BST2d.Node bottom = points.nearest(p);
+       if (bottom == null) return null;
+
+       return bottom.key;
+        /*
         else {
             double leftDiff = 1.0;
             double rightDiff = 1.0;
@@ -78,6 +92,8 @@ public class KdTree {
                 }
             }
         }
+
+         */
     }
 
     private class BST2d {
@@ -114,7 +130,7 @@ public class KdTree {
             int xCmp = edu.princeton.cs.algs4.Point2D.X_ORDER.compare(x.key, key);
             int yCmp = edu.princeton.cs.algs4.Point2D.Y_ORDER.compare(x.key, key);
 
-            int cmp = -1;
+            int cmp;
             if (x.isX) cmp = xCmp;
             else cmp = yCmp;
 
@@ -131,7 +147,8 @@ public class KdTree {
         }
 
         private Node put(Node x, edu.princeton.cs.algs4.Point2D key) {
-            if (x == null) return new Node(key, 1);
+            if (x == null)  return new Node(key, 1);
+
             int xCmp = edu.princeton.cs.algs4.Point2D.X_ORDER.compare(key, x.key);
             int yCmp = edu.princeton.cs.algs4.Point2D.Y_ORDER.compare(key, x.key);
 
@@ -248,7 +265,8 @@ public class KdTree {
          *
          * @return all keys in the symbol table in ascending order
          */
-        public Iterable<edu.princeton.cs.algs4.Point2D> keys() {
+        @Deprecated
+        private Iterable<edu.princeton.cs.algs4.Point2D> keys() {
             if (isEmpty()) return new Stack<Point2D>();
             return keys(min(), max());
         }
@@ -279,36 +297,92 @@ public class KdTree {
             else                 return max(x.right);
         }
 
+        public Iterable<edu.princeton.cs.algs4.Point2D> rangeKeys(RectHV rect) {
+            if (rect == null) throw new IllegalArgumentException();
+            Stack<Point2D> queue = new Stack<edu.princeton.cs.algs4.Point2D>();
+            keys(root, queue, rect);
+            return queue;
+        }
+
         public Iterable<edu.princeton.cs.algs4.Point2D> keys(edu.princeton.cs.algs4.Point2D lo, edu.princeton.cs.algs4.Point2D hi) {
             if (lo == null) throw new IllegalArgumentException("first argument to keys() is null");
             if (hi == null) throw new IllegalArgumentException("second argument to keys() is null");
 
-            Stack<Point2D> queue = new Stack<edu.princeton.cs.algs4.Point2D>();
-            keys(root, queue, lo, hi);
-            return queue;
+            Stack<Point2D> stack = new Stack<edu.princeton.cs.algs4.Point2D>();
+            keys(root, stack, lo, hi);
+            return stack;
+        }
+
+        private void keys(Node x, Stack<Point2D> stack, RectHV rect) {
+            if (x == null) return;
+
+            if (x.isX) { // 이 다음이 x
+                // todo
+                int minXPoint = Double.compare(rect.xmin(), x.key.x());
+                int maxXPoint = Double.compare(rect.xmax(), x.key.x());
+                if (minXPoint > 0) {
+                    stack.push(x.key);
+                    keys(x.right, stack, rect);
+                } else if (maxXPoint >= 0) {
+                    keys( x.left, stack, rect);
+                    stack.push(x.key);
+                    keys(x.right, stack, rect);
+                } else {
+                    keys(x.left, stack, rect);
+                    stack.push(x.key);
+                }
+            } else {
+                int minYPoint = Double.compare(rect.ymin(), x.key.y());
+                int maxYPoint = Double.compare(rect.ymax(), x.key.y());
+                if (minYPoint > 0) {
+                    stack.push(x.key);
+                    keys(x.right, stack, rect);
+                } else if (maxYPoint >= 0) {
+                    keys(x.left, stack, rect);
+                    stack.push(x.key);
+                    keys(x.right, stack, rect);
+                } else {
+                    keys(x.left, stack, rect);
+                    stack.push(x.key);
+                }
+            }
         }
 
         private void keys(Node x, Stack<edu.princeton.cs.algs4.Point2D> stack, edu.princeton.cs.algs4.Point2D lo, edu.princeton.cs.algs4.Point2D hi) {
             if (x == null) return;
-            int xComplo = edu.princeton.cs.algs4.Point2D.X_ORDER.compare(lo, x.key);
-            int yComplo = edu.princeton.cs.algs4.Point2D.Y_ORDER.compare(lo, x.key);
-            int xComphi = edu.princeton.cs.algs4.Point2D.X_ORDER.compare(hi, x.key);
-            int yComphi = edu.princeton.cs.algs4.Point2D.Y_ORDER.compare(hi, x.key);
 
-            int cmplo = -1; // lo.compareTo(x.key);
-            int cmphi = -1; // hi.compareTo(x.key);
-            if (x.isX) {
-                cmplo = xComplo;
-                cmphi = xComphi;
-            }
-            else {
-                cmplo = yComplo;
-                cmphi = yComphi;
+
+            if (x.isX) { // 이 다음이 x
+                // todo
+                int minXPoint = edu.princeton.cs.algs4.Point2D.X_ORDER.compare(lo, x.key);
+                int maxXPoint = edu.princeton.cs.algs4.Point2D.X_ORDER.compare(hi, x.key);
+                if (minXPoint > 0) {
+                    stack.push(x.key);
+                    keys(x.right, stack, lo, hi);
+                } else if (maxXPoint >= 0) {
+                    keys(x.left, stack, lo, hi);
+                    stack.push(x.key);
+                    keys(x.right, stack, lo, hi);
+                } else {
+                    keys(x.left, stack, lo, hi);
+                    stack.push(x.key);
+                }
+            } else {
+                int minYPoint = edu.princeton.cs.algs4.Point2D.Y_ORDER.compare(lo, x.key);
+                int maxYPoint = edu.princeton.cs.algs4.Point2D.Y_ORDER.compare(hi, x.key);
+                if (minYPoint > 0) {
+                    stack.push(x.key);
+                    keys(x.right, stack, lo, hi);
+                } else if (maxYPoint >= 0) {
+                    keys(x.left, stack, lo, hi);
+                    stack.push(x.key);
+                    keys(x.right, stack, lo, hi);
+                } else {
+                    keys(x.left, stack, lo, hi);
+                    stack.push(x.key);
+                }
             }
 
-            if (cmplo < 0) keys(x.left, stack, lo, hi);
-            if (cmplo <= 0 && cmphi >= 0) stack.push(x.key);
-            if (cmphi > 0) keys(x.right, stack, lo, hi);
         }
 
         /**
@@ -334,8 +408,7 @@ public class KdTree {
             if (key == null) throw new IllegalArgumentException("argument to ceiling() is null");
             if (isEmpty()) throw new NoSuchElementException("calls ceiling() with empty symbol table");
             Node x = bottom(root, key);
-            if (x == null) return null;
-            else return x;
+            return x;
         }
 
         private Node bottom(Node x, edu.princeton.cs.algs4.Point2D key) {
@@ -362,40 +435,118 @@ public class KdTree {
         public Node nearest(edu.princeton.cs.algs4.Point2D key) {
             if (key == null) throw new IllegalArgumentException("argument to ceiling() is null");
             if (isEmpty()) throw new NoSuchElementException("calls ceiling() with empty symbol table");
-            double rootDist = key.distanceSquaredTo(root.key);
-            Node x = nearest(root, key, rootDist);
-            if (x == null) return null;
-            else return x;
+            double rootDist = root.key.distanceSquaredTo(key);
+            return nearest(root, rootDist, key, new RectHV(0.0d,0.0d, 1.0d, 1.0d));
         }
 
-        private Node nearest(Node x, edu.princeton.cs.algs4.Point2D key, double rootDist) {
+        private Node nearest(Node x, double minDist, edu.princeton.cs.algs4.Point2D key, RectHV rect) {
             if (x == null) return null;
-            int cmp = 0;
 
-            if (x.isX) cmp = edu.princeton.cs.algs4.Point2D.X_ORDER.compare(x.key, key);
-            else cmp = edu.princeton.cs.algs4.Point2D.Y_ORDER.compare(x.key, key);
+            double curDist = x.key.distanceSquaredTo(key);
+            // if (rootDist < curDist) return null;
+            minDist = curDist < minDist ? curDist : minDist;
+            Node returnN = x;
+            Node left = null;
+            Node right = null;
+            double leftDist;
 
-            if (cmp > 0) {
-                Node t = nearest(x.left, key, rootDist);
-                if (t != null) {
-                    double tDist = t.key.distanceSquaredTo(key);
-                    rootDist = x.key.distanceSquaredTo(key);
-                    if (Double.compare(rootDist, tDist) > 0) return t;
+
+            if (x.isX) {
+                RectHV leftRect = new RectHV(rect.xmin(), rect.ymin(), x.key.x(), rect.ymax());
+                RectHV rightRect = new RectHV(x.key.x(), rect.ymin(), rect.xmax(), rect.ymax());
+
+                leftDist = leftRect.distanceSquaredTo(key);
+                double rightDist = rightRect.distanceSquaredTo(key);
+                boolean useLeftFirst = false;
+                boolean useRightFirst = false;
+                if (leftDist <= minDist && rightDist <= minDist) {
+                    if (leftDist <= rightDist) {
+                        useLeftFirst = true;
+                    } else {
+                        useRightFirst = true;
+                    }
                 }
-                else return x;
-            } else if (cmp < 0) {
-                Node t = nearest(x.right, key, rootDist);
-                if (t != null) {
-                    double tDist = t.key.distanceSquaredTo(key);
-                    rootDist = x.key.distanceSquaredTo(key);
-                    if (Double.compare(rootDist, tDist) > 0) return t;
+
+                if (useLeftFirst) {
+                    left = nearest(x.left, minDist, key, leftRect);
+                    if (left != null) {
+                        leftDist = left.key.distanceSquaredTo(key);
+                        if (minDist > leftDist) {
+                            minDist = leftDist;
+                        }
+                    }
+                    right = nearest(x.right, minDist, key, rightRect);
+                } else if (useRightFirst) {
+                    right = nearest(x.right, minDist, key, rightRect);
+                    if (right != null) {
+                        leftDist = right.key.distanceSquaredTo(key);
+                        if (minDist > leftDist) {
+                            minDist = leftDist;
+                        }
+                    }
+                    left = nearest(x.left, minDist, key, leftRect);
+                } else if (leftDist <= minDist) {
+                    left = nearest(x.left, minDist, key, leftRect);
+                } else if (rightDist <= minDist) {
+                    right = nearest(x.right, minDist, key, rightRect);
                 }
-                else return x;
+
             } else {
-                return x;
+                RectHV leftRect = new RectHV(rect.xmin(), rect.ymin(), rect.xmax(), x.key.y());
+                RectHV rightRect = new RectHV(rect.xmin(), x.key.y(), rect.xmax(), rect.ymax());
+
+                leftDist = leftRect.distanceSquaredTo(key);
+                double rightDist = rightRect.distanceSquaredTo(key);
+                boolean useLeftFirst = false;
+                boolean useRightFirst = false;
+                if (leftDist <= minDist && rightDist <= minDist) {
+                    if (leftDist <= rightDist) {
+                        useLeftFirst = true;
+                    } else {
+                        useRightFirst = true;
+                    }
+                }
+
+                if (useLeftFirst) {
+                    left = nearest(x.left, minDist, key, leftRect);
+                    if (left != null) {
+                        leftDist = left.key.distanceSquaredTo(key);
+                        if (minDist > leftDist) {
+                            minDist = leftDist;
+                        }
+                    }
+                    right = nearest(x.right, minDist, key, rightRect);
+                } else if (useRightFirst) {
+                    right = nearest(x.right, minDist, key, rightRect);
+                    if (right != null) {
+                        leftDist = right.key.distanceSquaredTo(key);
+                        if (minDist > leftDist) {
+                            minDist = leftDist;
+                        }
+                    }
+                    left = nearest(x.left, minDist, key, leftRect);
+                } else if (leftDist <= minDist) {
+                    left = nearest(x.left, minDist, key, leftRect);
+                } else if (rightDist <= minDist) {
+                    right = nearest(x.right, minDist, key, rightRect);
+                }
             }
 
-            return x;
+            if (left != null) {
+                leftDist = left.key.distanceSquaredTo(key);
+                if (minDist >= leftDist) {
+                    minDist = leftDist;
+                    returnN = left;
+                }
+            }
+            if (right != null) {
+                leftDist = right.key.distanceSquaredTo(key);
+                if (minDist >= leftDist) {
+                    returnN = right;
+                }
+            }
+
+            return returnN;
         }
 
         private class Node {
